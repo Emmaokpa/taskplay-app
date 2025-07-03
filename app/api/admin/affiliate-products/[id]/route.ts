@@ -1,3 +1,5 @@
+// app/api/admin/affiliate-products/[id]/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 
 // Import initialized admin services
@@ -31,9 +33,17 @@ async function verifyAdmin(request: NextRequest): Promise<boolean> {
   }
 }
 
+// Define an interface for the route parameters
+interface RouteParams {
+  id: string;
+}
+
 // PUT: Update an affiliate product by ID
-export async function PUT(request: NextRequest, context: { params: { id: string } }) {
-  const { id } = context.params;
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: RouteParams } // Corrected type for the second argument
+) {
+  const { id } = params; // params is directly available here
   const isAdmin = await verifyAdmin(request);
   if (!isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
@@ -68,8 +78,11 @@ export async function PUT(request: NextRequest, context: { params: { id: string 
 }
 
 // DELETE: Delete an affiliate product by ID
-export async function DELETE(request: NextRequest, context: { params: { id: string } }) {
-  const { id } = context.params;
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: RouteParams } // Apply the same correction here
+) {
+  const { id } = params; // params is directly available here
   const isAdmin = await verifyAdmin(request);
   if (!isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
