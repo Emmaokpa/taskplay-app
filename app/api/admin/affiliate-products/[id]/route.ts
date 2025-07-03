@@ -41,8 +41,8 @@ async function verifyAdmin(request: NextRequest): Promise<boolean> {
 }
 
 // PUT: Update an affiliate product by ID
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function PUT(request: NextRequest, context: { params: { id: string } }) {
+  const { id } = context.params;
   console.log(`PUT /api/admin/affiliate-products/${id} requested.`);
   const isAdmin = await verifyAdmin(request);
   if (!isAdmin) {
@@ -82,8 +82,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 // DELETE: Delete an affiliate product by ID
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function DELETE(request: NextRequest, context: { params: { id: string } }) {
+  const { id } = context.params;
   console.log(`DELETE /api/admin/affiliate-products/${id} requested.`);
   const isAdmin = await verifyAdmin(request);
   if (!isAdmin) {
