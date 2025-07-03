@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Ignore configuration files that may contain secrets
+/config
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
