@@ -13,29 +13,20 @@ import { Timestamp } from 'firebase-admin/firestore';
 async function verifyAdmin(request: NextRequest): Promise<boolean> {
   const authHeader = request.headers.get('Authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    console.warn('[API Route ID] Unauthorized attempt: Missing or invalid Authorization header.');
     return false;
   }
 
   const idToken = authHeader.split('Bearer ')[1];
   if (!idToken) {
-    console.warn('[API Route ID] Unauthorized attempt: ID token missing after Bearer.');
     return false;
   }
 
   try {
     const decodedToken = await adminAuth.verifyIdToken(idToken);
-    console.log(`[API Route ID] Firebase ID Token Decoded for UID: ${decodedToken.uid}`);
-
-    if (decodedToken.admin === true) {
-      console.log(`[API Route ID] User ${decodedToken.uid} is authorized as admin.`);
-      return true;
-    } else {
-      console.warn(`[API Route ID] User ${decodedToken.uid} is not an admin. Custom claim 'admin' is false or missing.`);
-      return false;
-    }
+    return decodedToken.admin === true;
   } catch (error: any) {
-    console.error(`[API Route ID] Error verifying Firebase ID token: ${error.code} - ${error.message}`);
+    // Log errors for debugging, but don't expose details to the client.
+    console.error(`Error verifying admin token: ${error.message}`);
     return false;
   }
 }
@@ -43,27 +34,23 @@ async function verifyAdmin(request: NextRequest): Promise<boolean> {
 // PUT: Update an affiliate product by ID
 export async function PUT(request: NextRequest, context: { params: { id: string } }) {
   const { id } = context.params;
-  console.log(`PUT /api/admin/affiliate-products/${id} requested.`);
   const isAdmin = await verifyAdmin(request);
   if (!isAdmin) {
-    console.log(`PUT /api/admin/affiliate-products/${id}: Unauthorized access.`);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 
   try {
     const body = await request.json();
-    // >>> CORRECTED LINE: Use adminDb here <<<
-    const productRef = adminDb.collection('affiliateProducts').doc(id); // Admin SDK way to get a document reference
+    const productRef = adminDb.collection('affiliateProducts').doc(id);
 
-    const docSnap = await productRef.get(); // Admin SDK method to get a snapshot
-    if (!docSnap.exists) { // Admin SDK uses .exists property directly
-      console.warn(`PUT /api/admin/affiliate-products/${id}: Product not found.`);
+    const docSnap = await productRef.get();
+    if (!docSnap.exists) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
     const updateData: { [key: string]: any } = { ...body, updatedAt: Timestamp.now() };
 
-    // Ensure numeric fields are stored as numbers if they are being updated
+    // Sanitize numeric fields
     if (body.price !== undefined) {
       updateData.price = Number(body.price);
     }
@@ -71,12 +58,11 @@ export async function PUT(request: NextRequest, context: { params: { id: string 
       updateData.baseCommission = Number(body.baseCommission);
     }
 
-    await productRef.update(updateData); // Admin SDK method to update
+    await productRef.update(updateData);
 
-    console.log(`[API Route ID] Product ${id} updated successfully.`);
     return NextResponse.json({ id, ...updateData });
   } catch (error: any) {
-    console.error(`[API Route ID] Error updating product ${id}:`, error);
+    console.error(`Error updating product ${id}:`, error);
     return NextResponse.json({ error: 'Failed to update product' }, { status: 500 });
   }
 }
@@ -84,29 +70,24 @@ export async function PUT(request: NextRequest, context: { params: { id: string 
 // DELETE: Delete an affiliate product by ID
 export async function DELETE(request: NextRequest, context: { params: { id: string } }) {
   const { id } = context.params;
-  console.log(`DELETE /api/admin/affiliate-products/${id} requested.`);
   const isAdmin = await verifyAdmin(request);
   if (!isAdmin) {
-    console.log(`DELETE /api/admin/affiliate-products/${id}: Unauthorized access.`);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 
   try {
-    // >>> CORRECTED LINE: Use adminDb here <<<
-    const productRef = adminDb.collection('affiliateProducts').doc(id); // Admin SDK way to get a document reference
-    const docSnap = await productRef.get(); // Admin SDK method to get a snapshot
+    const productRef = adminDb.collection('affiliateProducts').doc(id);
+    const docSnap = await productRef.get();
 
-    if (!docSnap.exists) { // Admin SDK uses .exists property directly
-      console.warn(`DELETE /api/admin/affiliate-products/${id}: Product not found.`);
+    if (!docSnap.exists) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
-    await productRef.delete(); // Admin SDK method to delete
+    await productRef.delete();
 
-    console.log(`[API Route ID] Product ${id} deleted successfully.`);
     return NextResponse.json({ message: 'Product deleted successfully' });
   } catch (error: any) {
-    console.error(`[API Route ID] Error deleting product ${id}:`, error);
+    console.error(`Error deleting product ${id}:`, error);
     return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
   }
 }
