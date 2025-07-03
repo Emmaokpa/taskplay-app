@@ -1,3 +1,4 @@
+// app/api/admin/withdrawal-requests/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin-config';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
@@ -22,16 +23,19 @@ async function verifyAdmin(request: NextRequest): Promise<boolean> {
     }
 }
 
-export async function PUT(request: NextRequest, context: { params: { id: string } }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } } // Corrected: Direct destructuring of params
+) {
     const isAdmin = await verifyAdmin(request);
     if (!isAdmin) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { id: requestId } = context.params;
+    const { id: requestId } = params; // Access params directly
     try {
         const { status, rejectionReason } = await request.json();
-        
+
         // To be used for email notification after transaction
         let requestDataForEmail: any = null;
 
@@ -101,3 +105,13 @@ export async function PUT(request: NextRequest, context: { params: { id: string 
         return NextResponse.json({ error: error.message || 'Internal server error.' }, { status: 500 });
     }
 }
+
+// If you have a DELETE function in this file, it will also need the same fix.
+// Example for DELETE:
+// export async function DELETE(
+//   request: NextRequest,
+//   { params }: { params: { id: string } }
+// ) {
+//   const { id: requestId } = params;
+//   // ... rest of your DELETE logic
+// }
