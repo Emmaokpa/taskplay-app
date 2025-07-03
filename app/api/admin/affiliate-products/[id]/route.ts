@@ -33,15 +33,10 @@ async function verifyAdmin(request: NextRequest): Promise<boolean> {
   }
 }
 
-// Define an interface for the route parameters
-interface RouteParams {
-  id: string;
-}
-
 // PUT: Update an affiliate product by ID
 export async function PUT(
   request: NextRequest,
-  { params }: { params: RouteParams } // Corrected type for the second argument
+  { params }: { params: { id: string } } // This is the standard way Next.js expects dynamic params
 ) {
   const { id } = params; // params is directly available here
   const isAdmin = await verifyAdmin(request);
@@ -80,7 +75,7 @@ export async function PUT(
 // DELETE: Delete an affiliate product by ID
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: RouteParams } // Apply the same correction here
+  { params }: { params: { id: string } } // Apply the same correction here
 ) {
   const { id } = params; // params is directly available here
   const isAdmin = await verifyAdmin(request);
