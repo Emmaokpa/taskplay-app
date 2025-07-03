@@ -36,9 +36,9 @@ async function verifyAdmin(request: NextRequest): Promise<boolean> {
 // PUT: Update an affiliate product by ID
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } } // This is the standard way Next.js expects dynamic params
+  { params } // Removed explicit type annotation for params here
 ) {
-  const { id } = params; // params is directly available here
+  const { id } = params; // params is still destructured and will have its type inferred
   const isAdmin = await verifyAdmin(request);
   if (!isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
@@ -75,9 +75,9 @@ export async function PUT(
 // DELETE: Delete an affiliate product by ID
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } } // Apply the same correction here
+  { params } // Removed explicit type annotation here as well
 ) {
-  const { id } = params; // params is directly available here
+  const { id } = params; // params is still destructured and will have its type inferred
   const isAdmin = await verifyAdmin(request);
   if (!isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
@@ -96,6 +96,6 @@ export async function DELETE(
     return NextResponse.json({ message: 'Product deleted successfully' });
   } catch (error: any) {
     console.error(`Error deleting product ${id}:`, error);
-    return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
+    }
   }
-}
