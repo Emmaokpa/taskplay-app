@@ -35,7 +35,7 @@ export default function WithdrawalsAdminPage() {
   const [requests, setRequests] = useState<WithdrawalRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('pending');
-  const [isProcessing, setIsProcessing] = useState<string | null>(null); // Store the ID of the request being processed
+  const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
   // State for rejection dialog
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
@@ -135,6 +135,21 @@ export default function WithdrawalsAdminPage() {
     }
   };
 
+  // Helper function to safely convert Timestamp to Date
+  const getRequestDate = (timestamp: any) => {
+    try {
+      // Check if it's a Firestore Timestamp
+      if (timestamp?.toDate) {
+        return timestamp.toDate().toLocaleString();
+      }
+      // Fallback for regular Date objects or strings
+      return new Date(timestamp).toLocaleString();
+    } catch (error) {
+      console.error('Error parsing date:', error);
+      return 'Invalid date';
+    }
+  };
+
   return (
     <div className="container mx-auto p-4 md:p-6 lg:p-8">
       <Card>
@@ -176,7 +191,6 @@ export default function WithdrawalsAdminPage() {
                         <div className="text-sm text-muted-foreground">{req.userEmail}</div>
                       </TableCell>
                       <TableCell>
-                        {/* Fix applied here: Safely call toFixed on potentially undefined/null numbers */}
                         <div className="font-mono">Gross: ₦{(req.grossAmount ?? 0).toFixed(2)}</div>
                         <div className="text-xs text-muted-foreground font-mono">Fee (5%): -₦{(req.fee ?? 0).toFixed(2)}</div>
                         <div className="font-semibold font-mono border-t mt-1 pt-1">Net: ₦{(req.netAmount ?? 0).toFixed(2)}</div>
@@ -191,7 +205,7 @@ export default function WithdrawalsAdminPage() {
                         </div>
                         <div className="text-xs">{req.payoutDetails.accountName}</div>
                       </TableCell>
-                      <TableCell>{new Date(req.requestedAt).toLocaleString()}</TableCell>
+                      <TableCell>{getRequestDate(req.requestedAt)}</TableCell>
                       <TableCell>
                         <Badge variant={getStatusBadgeVariant(req.status)} className="capitalize">{req.status}</Badge>
                       </TableCell>
@@ -231,9 +245,11 @@ export default function WithdrawalsAdminPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Reject Withdrawal Request</DialogTitle>
-            <DialogDescription>
-              Please provide a reason for rejecting this request. The amount will be refunded to the user's balance.
-            </DialogDescription>
+            <DialogHeader>
+              <DialogDescription>
+                Please provide a reason for rejecting this request. The amount will be refunded to the user's balance.
+              </DialogDescription>
+            </DialogHeader>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
