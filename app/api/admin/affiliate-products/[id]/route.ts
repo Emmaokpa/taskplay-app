@@ -5,12 +5,16 @@ import { adminDb } from '@/lib/firebase/admin-config';
 import { Timestamp } from 'firebase-admin/firestore';
 import { verifyAdmin } from '@/lib/auth/admin';
 
+// Helper to type Promise-based params
+type IdParams = { params: Promise<{ id: string }> };
+
 // PUT: Update an affiliate product by ID
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: IdParams
 ) {
-  const { id } = params;
+  const { id } = await context.params;
+
   const isAdmin = await verifyAdmin(request);
   if (!isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
@@ -27,7 +31,6 @@ export async function PUT(
 
     const updateData: { [key: string]: any } = { ...body, updatedAt: Timestamp.now() };
 
-    // Sanitize numeric fields
     if (body.price !== undefined) {
       updateData.price = Number(body.price);
     }
@@ -47,9 +50,10 @@ export async function PUT(
 // DELETE: Delete an affiliate product by ID
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: IdParams
 ) {
-  const { id } = params;
+  const { id } = await context.params;
+
   const isAdmin = await verifyAdmin(request);
   if (!isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
