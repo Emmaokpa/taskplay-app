@@ -36,9 +36,9 @@ async function verifyAdmin(request: NextRequest): Promise<boolean> {
 // PUT: Update an affiliate product by ID
 export async function PUT(
   request: NextRequest,
-  { params } // Removed explicit type annotation for params here
+  context: { params: { id: string } }
 ) {
-  const { id } = params; // params is still destructured and will have its type inferred
+  const { id } = context.params;
   const isAdmin = await verifyAdmin(request);
   if (!isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
@@ -75,9 +75,9 @@ export async function PUT(
 // DELETE: Delete an affiliate product by ID
 export async function DELETE(
   request: NextRequest,
-  { params } // Removed explicit type annotation here as well
+  context: { params: { id: string } }
 ) {
-  const { id } = params; // params is still destructured and will have its type inferred
+  const { id } = context.params;
   const isAdmin = await verifyAdmin(request);
   if (!isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });

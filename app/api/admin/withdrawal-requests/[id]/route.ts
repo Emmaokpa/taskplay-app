@@ -25,14 +25,14 @@ async function verifyAdmin(request: NextRequest): Promise<boolean> {
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } } // Corrected: Direct destructuring of params
+  context: { params: { id: string } }
 ) {
     const isAdmin = await verifyAdmin(request);
     if (!isAdmin) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { id: requestId } = params; // Access params directly
+    const { id: requestId } = context.params;
     try {
         const { status, rejectionReason } = await request.json();
 
@@ -91,7 +91,7 @@ export async function PUT(
                         netAmount: requestDataForEmail.netAmount,
                         rejectionReason: rejectionReason,
                         dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/profile`,
-                    }),
+                    }) as React.ReactElement,
                 });
             } catch (emailError) {
                 console.error(`Failed to send withdrawal ${status} email for request ${requestId}:`, emailError);
