@@ -1,28 +1,9 @@
 // app/api/admin/affiliate-products/[id]/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb, adminAuth } from '@/lib/firebase/admin-config';
+import { adminDb } from '@/lib/firebase/admin-config';
 import { Timestamp } from 'firebase-admin/firestore';
-
-async function verifyAdmin(request: NextRequest): Promise<boolean> {
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return false;
-  }
-
-  const idToken = authHeader.split('Bearer ')[1];
-  if (!idToken) {
-    return false;
-  }
-
-  try {
-    const decodedToken = await adminAuth.verifyIdToken(idToken);
-    return decodedToken.admin === true;
-  } catch (error: any) {
-    console.error(`Error verifying admin token: ${error.message}`);
-    return false;
-  }
-}
+import { verifyAdmin } from '@/lib/auth/admin';
 
 // PUT: Update an affiliate product by ID
 export async function PUT(

@@ -1,29 +1,11 @@
 // app/api/admin/withdrawal-requests/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb, adminAuth } from '@/lib/firebase/admin-config';
+import { adminDb } from '@/lib/firebase/admin-config';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { sendEmail } from '@/lib/email';
 import { WithdrawalRequestStatusUpdate } from '@/emails/WithdrawalRequestStatusUpdate';
 import React from 'react';
-
-async function verifyAdmin(request: NextRequest): Promise<boolean> {
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return false;
-    }
-    const idToken = authHeader.split('Bearer ')[1];
-    if (!idToken) {
-        return false;
-    }
-    try {
-        const decodedToken = await adminAuth.verifyIdToken(idToken);
-        // Ensure the custom claim 'admin' is true
-        return decodedToken.admin === true;
-    } catch (error) {
-        console.error(`Error verifying Firebase ID token:`, error);
-        return false;
-    }
-}
+import { verifyAdmin } from '@/lib/auth/admin';
 
 export async function PUT(
   request: NextRequest,
