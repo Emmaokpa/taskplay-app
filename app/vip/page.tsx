@@ -117,7 +117,7 @@ const VIPPage = () => {
 
   if (user.subscription?.status === 'active' || user.subscription?.status === 'cancelled') {
     // Find the details of the current tier to display features
-    const currentTierDetails = tiers.find(t => t.tier === user.subscription.tier);
+    const currentTierDetails = tiers.find(t => t.tier === user.subscription?.tier);
     const isActive = user.subscription.status === 'active';
 
     return (
