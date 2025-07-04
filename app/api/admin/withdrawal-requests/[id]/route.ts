@@ -27,14 +27,14 @@ async function verifyAdmin(request: NextRequest): Promise<boolean> {
 
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
     const isAdmin = await verifyAdmin(request);
     if (!isAdmin) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { id: requestId } = context.params;
+    const { id: requestId } = params;
     try {
         const { status, rejectionReason } = await request.json();
 

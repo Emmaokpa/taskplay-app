@@ -27,9 +27,9 @@ async function verifyAdmin(request: NextRequest): Promise<boolean> {
 // PUT: Update an affiliate product by ID
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
-  const { id } = context.params;
+  const { id } = params;
   const isAdmin = await verifyAdmin(request);
   if (!isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
@@ -66,9 +66,9 @@ export async function PUT(
 // DELETE: Delete an affiliate product by ID
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
-  const { id } = context.params;
+  const { id } = params;
   const isAdmin = await verifyAdmin(request);
   if (!isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
