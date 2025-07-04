@@ -105,6 +105,16 @@ export default function ProfilePage() {
     return null;
   }
 
+  // Create a user object with default values for potentially undefined numeric fields
+  // to prevent runtime errors in child components.
+  const safeUser = {
+    ...user,
+    nairaBalance: user.nairaBalance ?? 0,
+    referralEarnings: user.referralEarnings ?? 0,
+    affiliateEarnings: user.affiliateEarnings ?? 0,
+    totalReferrals: user.totalReferrals ?? 0,
+  };
+
   const subscription = user.subscription;
   let daysRemaining: number | null = null;
   let showExpirationWarning = false;
@@ -236,12 +246,12 @@ export default function ProfilePage() {
             <CardContent>{renderSubscriptionContent()}</CardContent>
           </Card>
 
-          <EarningsCard user={user} />
+          <EarningsCard user={safeUser} />
 
           <ReferralInfoCard
-            referralCode={user.referralCode ?? "N/A"}
-            totalReferrals={user.totalReferrals ?? 0}
-            referralEarnings={user.referralEarnings ?? 0}
+            referralCode={safeUser.referralCode ?? "N/A"}
+            totalReferrals={safeUser.totalReferrals}
+            referralEarnings={safeUser.referralEarnings}
           />
         </div>
       </div>

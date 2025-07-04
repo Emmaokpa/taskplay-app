@@ -248,7 +248,7 @@ export function EarningsCard({ user }: EarningsCardProps) {
                       history.map((req) => (
                         <TableRow key={req.id}>
                           <TableCell>{new Date(req.requestedAt).toLocaleDateString()}</TableCell>
-                          <TableCell className="text-right font-mono">₦{req.netAmount.toFixed(2)}</TableCell>
+                          <TableCell className="text-right font-mono">₦{(req.netAmount || 0).toFixed(2)}</TableCell>
                           <TableCell className="text-right">
                             <Badge variant={getStatusBadgeVariant(req.status)} className="capitalize">{req.status}</Badge>
                           </TableCell>
