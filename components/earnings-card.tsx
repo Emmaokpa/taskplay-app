@@ -247,9 +247,16 @@ export function EarningsCard({ user }: EarningsCardProps) {
                     ) : (
                       history.map((req) => (
                         <TableRow key={req.id}>
-                          <TableCell>{req.requestedAt && typeof req.requestedAt.toDate === 'function'
-                            ? req.requestedAt.toDate().toLocaleDateString()
-                            : new Date(req.requestedAt).toLocaleDateString()}
+                          <TableCell>
+                            {req.requestedAt
+                              ? typeof req.requestedAt.toDate === 'function'
+                                ? req.requestedAt.toDate().toLocaleDateString()
+                                : new Date(
+                                    typeof req.requestedAt === 'string' || typeof req.requestedAt === 'number'
+                                      ? req.requestedAt
+                                      : ''
+                                  ).toLocaleDateString()
+                              : ''}
                           </TableCell>
                           <TableCell className="text-right font-mono">₦{(req.netAmount || 0).toFixed(2)}</TableCell>
                           <TableCell className="text-right">
