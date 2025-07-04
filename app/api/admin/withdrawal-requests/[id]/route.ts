@@ -1,4 +1,5 @@
 // app/api/admin/withdrawal-requests/[id]/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin-config';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
@@ -7,84 +8,84 @@ import { WithdrawalRequestStatusUpdate } from '@/emails/WithdrawalRequestStatusU
 import React from 'react';
 import { verifyAdmin } from '@/lib/auth/admin';
 
+type IdParams = { params: Promise<{ id: string }> };
+
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: IdParams
 ) {
-    const isAdmin = await verifyAdmin(request);
-    if (!isAdmin) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+  const isAdmin = await verifyAdmin(request);
+  if (!isAdmin) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+  }
+
+  const { id: requestId } = await params;
+
+  try {
+    const { status, rejectionReason } = await request.json();
+
+    let requestDataForEmail: any = null;
+
+    if (!['approved', 'rejected'].includes(status)) {
+      return NextResponse.json({ error: 'Invalid status provided.' }, { status: 400 });
+    }
+    if (status === 'rejected' && !rejectionReason) {
+      return NextResponse.json({ error: 'Rejection reason is required for rejected status.' }, { status: 400 });
     }
 
-    const { id: requestId } = params;
-    try {
-        const { status, rejectionReason } = await request.json();
+    const requestRef = adminDb.collection('withdrawalRequests').doc(requestId);
 
-        // To be used for email notification after transaction
-        let requestDataForEmail: any = null;
+    await adminDb.runTransaction(async (transaction) => {
+      const requestDoc = await transaction.get(requestRef);
+      if (!requestDoc.exists) {
+        throw new Error('Withdrawal request not found.');
+      }
 
-        if (!['approved', 'rejected'].includes(status)) {
-            return NextResponse.json({ error: 'Invalid status provided.' }, { status: 400 });
-        }
-        if (status === 'rejected' && !rejectionReason) {
-            return NextResponse.json({ error: 'Rejection reason is required for rejected status.' }, { status: 400 });
-        }
+      const requestData = requestDoc.data();
+      requestDataForEmail = requestData;
 
-        const requestRef = adminDb.collection('withdrawalRequests').doc(requestId);
+      if (requestData?.status !== 'pending') {
+        throw new Error(`Request is already ${requestData?.status}.`);
+      }
 
-        await adminDb.runTransaction(async (transaction) => {
-            const requestDoc = await transaction.get(requestRef);
-            if (!requestDoc.exists) {
-                throw new Error('Withdrawal request not found.');
-            }
+      const updateData: { [key: string]: any } = {
+        status,
+        processedAt: Timestamp.now(),
+      };
 
-            const requestData = requestDoc.data();
-            requestDataForEmail = requestData; // Capture data for email
-            if (requestData?.status !== 'pending') {
-                throw new Error(`Request is already ${requestData?.status}.`);
-            }
+      if (status === 'rejected') {
+        updateData.rejectionReason = rejectionReason;
 
-            const updateData: { [key: string]: any } = {
-                status,
-                processedAt: Timestamp.now(),
-            };
-
-            if (status === 'rejected') {
-                updateData.rejectionReason = rejectionReason;
-
-                // Refund the amount to the user's balance.
-                const userRef = adminDb.collection('users').doc(requestData.userId);
-                transaction.update(userRef, {
-                    nairaBalance: FieldValue.increment(requestData.grossAmount),
-                });
-            }
-
-            transaction.update(requestRef, updateData);
+        const userRef = adminDb.collection('users').doc(requestData.userId);
+        transaction.update(userRef, {
+          nairaBalance: FieldValue.increment(requestData.grossAmount),
         });
+      }
 
-        // Send status update email outside the transaction
-        if (requestDataForEmail && requestDataForEmail.userEmail) {
-            try {
-                await sendEmail({
-                    to: requestDataForEmail.userEmail,
-                    subject: `Your Withdrawal Request has been ${status}`,
-                    react: WithdrawalRequestStatusUpdate({
-                        displayName: requestDataForEmail.displayName || 'User',
-                        status,
-                        netAmount: requestDataForEmail.netAmount,
-                        rejectionReason: rejectionReason, // Pass rejectionReason here
-                        dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/profile`,
-                    }) as React.ReactElement,
-                });
-            } catch (emailError) {
-                console.error(`Failed to send withdrawal ${status} email for request ${requestId}:`, emailError);
-            }
-        }
+      transaction.update(requestRef, updateData);
+    });
 
-        return NextResponse.json({ message: `Request successfully ${status}.` });
-
-    } catch (error: any) {
-        console.error(`Error updating withdrawal request ${requestId}:`, error);
-        return NextResponse.json({ error: error.message || 'Internal server error.' }, { status: 500 });
+    if (requestDataForEmail && requestDataForEmail.userEmail) {
+      try {
+        await sendEmail({
+          to: requestDataForEmail.userEmail,
+          subject: `Your Withdrawal Request has been ${status}`,
+          react: WithdrawalRequestStatusUpdate({
+            displayName: requestDataForEmail.displayName || 'User',
+            status,
+            netAmount: requestDataForEmail.netAmount,
+            rejectionReason,
+            dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/profile`,
+          }) as React.ReactElement,
+        });
+      } catch (emailError) {
+        console.error(`Failed to send withdrawal ${status} email for request ${requestId}:`, emailError);
+      }
     }
+
+    return NextResponse.json({ message: `Request successfully ${status}.` });
+  } catch (error: any) {
+    console.error(`Error updating withdrawal request ${requestId}:`, error);
+    return NextResponse.json({ error: error.message || 'Internal server error.' }, { status: 500 });
+  }
 }
