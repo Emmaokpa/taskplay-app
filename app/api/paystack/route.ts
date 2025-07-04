@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import Paystack from 'paystack';
 import { v4 as uuidv4 } from 'uuid';
 
-const paystack = Paystack(process.env.PAYSTACK_SECRET_KEY);
+const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
+if (!paystackSecretKey) {
+  throw new Error('PAYSTACK_SECRET_KEY environment variable is not set.');
+}
+const paystack = Paystack(paystackSecretKey);
 
 export async function POST(req: NextRequest) {
   try {
@@ -58,6 +62,7 @@ export async function POST(req: NextRequest) {
       plan,
       amount,
       reference,
+      name: email, // or provide a real name if available
     });
 
     // console.log('Paystack API Response:', response);
