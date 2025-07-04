@@ -4,6 +4,7 @@ import { adminDb, adminAuth } from '@/lib/firebase/admin-config';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { sendEmail } from '@/lib/email';
 import { WithdrawalRequestStatusUpdate } from '@/emails/WithdrawalRequestStatusUpdate';
+import React from 'react';
 
 async function verifyAdmin(request: NextRequest): Promise<boolean> {
     const authHeader = request.headers.get('Authorization');
@@ -70,7 +71,6 @@ export async function PUT(
                 updateData.rejectionReason = rejectionReason;
 
                 // Refund the amount to the user's balance.
-                // For simplicity, we refund to the main nairaBalance.
                 const userRef = adminDb.collection('users').doc(requestData.userId);
                 transaction.update(userRef, {
                     nairaBalance: FieldValue.increment(requestData.grossAmount),

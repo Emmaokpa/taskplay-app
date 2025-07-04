@@ -1,17 +1,9 @@
 // app/api/admin/affiliate-products/[id]/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-
-// Import initialized admin services
 import { adminDb, adminAuth } from '@/lib/firebase/admin-config';
-
 import { Timestamp } from 'firebase-admin/firestore';
 
-/**
- * Verifies the Firebase ID token and checks if the user has the 'admin: true' custom claim.
- * @param request The NextRequest object containing headers.
- * @returns true if the token is valid and user is admin, false otherwise.
- */
 async function verifyAdmin(request: NextRequest): Promise<boolean> {
   const authHeader = request.headers.get('Authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -27,7 +19,6 @@ async function verifyAdmin(request: NextRequest): Promise<boolean> {
     const decodedToken = await adminAuth.verifyIdToken(idToken);
     return decodedToken.admin === true;
   } catch (error: any) {
-    // Log errors for debugging, but don't expose details to the client.
     console.error(`Error verifying admin token: ${error.message}`);
     return false;
   }
@@ -96,6 +87,6 @@ export async function DELETE(
     return NextResponse.json({ message: 'Product deleted successfully' });
   } catch (error: any) {
     console.error(`Error deleting product ${id}:`, error);
-      return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
-    }
+    return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
   }
+}
