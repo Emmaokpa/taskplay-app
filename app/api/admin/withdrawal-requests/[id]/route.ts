@@ -16,6 +16,7 @@ async function verifyAdmin(request: NextRequest): Promise<boolean> {
     }
     try {
         const decodedToken = await adminAuth.verifyIdToken(idToken);
+        // Ensure the custom claim 'admin' is true
         return decodedToken.admin === true;
     } catch (error) {
         console.error(`Error verifying Firebase ID token:`, error);
@@ -24,15 +25,17 @@ async function verifyAdmin(request: NextRequest): Promise<boolean> {
 }
 
 export async function PUT(
-  request: NextRequest,
-  context: { params: { id: string } }
+    request: NextRequest,
+    // Corrected type for the second argument: destructure `params` directly
+    { params }: { params: { id: string } }
 ) {
     const isAdmin = await verifyAdmin(request);
     if (!isAdmin) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { id: requestId } = context.params;
+    // Access the id from the destructured params
+    const { id: requestId } = params;
     try {
         const { status, rejectionReason } = await request.json();
 
@@ -89,7 +92,7 @@ export async function PUT(
                         displayName: requestDataForEmail.displayName || 'User',
                         status,
                         netAmount: requestDataForEmail.netAmount,
-                        rejectionReason: rejectionReason,
+                        rejectionReason: rejectionReason, // Pass rejectionReason here
                         dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/profile`,
                     }) as React.ReactElement,
                 });
@@ -105,13 +108,3 @@ export async function PUT(
         return NextResponse.json({ error: error.message || 'Internal server error.' }, { status: 500 });
     }
 }
-
-// If you have a DELETE function in this file, it will also need the same fix.
-// Example for DELETE:
-// export async function DELETE(
-//   request: NextRequest,
-//   { params }: { params: { id: string } }
-// ) {
-//   const { id: requestId } = params;
-//   // ... rest of your DELETE logic
-// }
