@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Html, Button, Heading, Text, Section, Container } from '@react-email/components';
+import { ReactElement } from 'react';
 
 interface WithdrawalRequestAdminNotificationProps {
   displayName: string;
@@ -9,13 +10,13 @@ interface WithdrawalRequestAdminNotificationProps {
   adminDashboardUrl: string;
 }
 
-export const WithdrawalRequestAdminNotification: React.FC<WithdrawalRequestAdminNotificationProps> = ({
+export const WithdrawalRequestAdminNotification = ({
   displayName,
   userEmail,
   grossAmount,
   netAmount,
   adminDashboardUrl,
-}) => (
+}: WithdrawalRequestAdminNotificationProps): ReactElement => (
   <Html>
     <Container style={container}>
       <Heading style={heading}>New Withdrawal Request</Heading>
@@ -39,7 +40,9 @@ export const WithdrawalRequestAdminNotification: React.FC<WithdrawalRequestAdmin
   </Html>
 );
 
-export default WithdrawalRequestAdminNotification;
+// Explicit default export with type annotation
+const WithdrawalRequestAdminNotificationExport: React.FC<WithdrawalRequestAdminNotificationProps> = WithdrawalRequestAdminNotification;
+export default WithdrawalRequestAdminNotificationExport;
 
 // Styles
 const container = {

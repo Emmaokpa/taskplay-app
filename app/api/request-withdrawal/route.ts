@@ -5,6 +5,7 @@ import { UserProfile } from '@/lib/types';
 import { sendEmail } from '@/lib/email';
 import { WithdrawalRequestAdminNotification } from '@/emails/WithdrawalRequestAdminNotification';
 import { WithdrawalRequestUserConfirmation } from '@/emails/WithdrawalRequestUserConfirmation';
+import { ReactElement } from 'react';
 
 const MINIMUM_WITHDRAWAL_AMOUNT = 1000; // Example: ₦1000
 const WITHDRAWAL_FEE_PERCENTAGE = 0.05; // 5%
@@ -146,7 +147,7 @@ export async function POST(request: NextRequest) {
                             grossAmount: grossAmount,
                             netAmount: netAmount,
                             adminDashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/admin/withdrawals`,
-                        }),
+                        }) as ReactElement, // Explicit type assertion
                     });
                 }
 
@@ -158,7 +159,7 @@ export async function POST(request: NextRequest) {
                         displayName: displayNameForNotification,
                         grossAmount, fee, netAmount,
                         dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/profile`,
-                    }),
+                    }) as ReactElement, // Explicit type assertion
                 });
             } catch (emailError) {
                 console.error('Failed to send withdrawal request emails:', emailError);
