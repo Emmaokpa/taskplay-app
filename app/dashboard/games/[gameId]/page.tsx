@@ -41,7 +41,8 @@ const TIER_BENEFITS = {
 const GameIframe = memo(function GameIframe({ gameScript }: { gameScript: string }) {
   return (
     <div
-      className="w-full flex-grow flex items-center justify-center bg-black"
+      // This targets any direct iframe child and makes it fill the container, overriding fixed dimensions.
+      className="w-full flex-grow bg-black [&>iframe]:h-full [&>iframe]:w-full"
       dangerouslySetInnerHTML={{ __html: gameScript }}
     />
   );
@@ -107,7 +108,7 @@ export default function GamePlayPage() {
       const gamesPlayedToday = user.dailyFreeGamesPlayed?.[todayDateString] ?? 0;
       setIsEligibleForReward(gamesPlayedToday < DAILY_FREE_GAME_LIMIT);
     } else if (game.gameType === 'paid') {
-      const hasActiveSubscription = user.subscription?.expiresAt ? (user.subscription.expiresAt as unknown as Timestamp).toMillis() > Date.now() : false;
+      const hasActiveSubscription = user.subscription?.expiresAt ? user.subscription.expiresAt.toMillis() > Date.now() : false;
       if (!hasActiveSubscription) {
         toast.error("You need an active subscription to play this game.", {
           description: "Please subscribe to a plan to continue.",
@@ -125,8 +126,8 @@ export default function GamePlayPage() {
 
   // Determine if timer and ads should be active based on subscription
   useEffect(() => {
-    if (user && game && game.gameType === 'paid') {
-      const hasActiveSubscription = user.subscription?.expiresAt ? (user.subscription.expiresAt as unknown as Timestamp).toMillis() > Date.now() : false;
+    if (user && game && game.gameType === 'paid' && user.subscription?.expiresAt) {
+      const hasActiveSubscription = user.subscription.expiresAt.toMillis() > Date.now();
       if (hasActiveSubscription) {
         setIsTimerActive(false); // Paid users have no timer
         setShowAds(!isEligibleForReward); // Show ads only if they've passed their daily reward limit
@@ -241,20 +242,20 @@ export default function GamePlayPage() {
   }
 
   return (
-    <div className="flex flex-col items-center p-4 h-full">
-      <h1 className="text-3xl font-bold mb-2">{game.title}</h1>
-      <p className="text-muted-foreground mb-4">{game.description}</p>
+    <div className="flex flex-col items-center p-2 sm:p-4">
+      <h1 className="text-2xl md:text-3xl font-bold mb-2 text-center">{game.title}</h1>
+      <p className="text-muted-foreground mb-4 text-center text-sm md:text-base">{game.description}</p>
 
-      <div className="w-full flex-grow bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center text-center overflow-hidden relative">
+      <div className="relative w-full max-w-4xl mx-auto aspect-video bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden">
         {/* Pre-roll View */}
         <div className={cn("absolute inset-0 w-full h-full bg-black text-white flex-col items-center justify-center gap-4 p-4", gameState === 'preroll' ? 'flex' : 'hidden')}>
-          <p className="text-2xl font-bold text-center">Your game will start after this ad.</p>
+          <p className="text-xl md:text-2xl font-bold text-center">Your game will start after this ad.</p>
           <p className="text-muted-foreground text-center">This is a placeholder for a pre-roll video ad.</p>
           <Button onClick={handleStartGame} size="lg" className="mt-4">Start Game</Button>
         </div>
 
         {/* Playing View */}
-        <div className={cn("w-full h-full flex-col", gameState === 'playing' ? 'flex' : 'hidden')}>
+        <div className={cn("w-full h-full flex flex-col", gameState === 'playing' ? 'flex' : 'hidden')}>
           {isTimerActive && (
             <div className="p-2 bg-gray-100 dark:bg-gray-800 flex items-center justify-between gap-4">
               <p className="font-mono text-lg whitespace-nowrap">Time Left: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</p>
@@ -266,7 +267,7 @@ export default function GamePlayPage() {
 
         {/* Post-roll View */}
         <div className={cn("absolute inset-0 w-full h-full bg-black text-white flex-col items-center justify-center gap-4 p-4", gameState === 'postroll' ? 'flex' : 'hidden')}>
-          <p className="text-3xl font-bold">Game Over!</p>
+          <p className="text-2xl md:text-3xl font-bold">Game Over!</p>
           {isEligibleForReward && rewardAwarded && (
             <p className="text-green-400 text-xl">{
               game?.gameType === 'free'
@@ -288,7 +289,7 @@ export default function GamePlayPage() {
           )}
           {/* Conditionally render the "Play Again" button */}
           {isEligibleForReward && (
-            <div className="flex gap-4 mt-4">
+            <div className="flex flex-col sm:flex-row gap-4 mt-4">
               <Button onClick={handlePlayAgain} size="lg">Play Again</Button>
               <Button onClick={() => router.push('/dashboard/games')} size="lg" variant="outline">Back to Games</Button>
             </div>

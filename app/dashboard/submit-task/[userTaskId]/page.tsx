@@ -158,16 +158,16 @@ export default function SubmitTaskPage() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center h-full p-4">
+    <div className="flex flex-col items-center justify-start h-full p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader>
-          <CardTitle>Submit Screenshot for: {taskDetails.title}</CardTitle>
-          <p className="text-sm text-gray-500">Reward: ₦{taskDetails.reward}</p>
+          <CardTitle className="text-xl md:text-2xl">Submit Screenshot for: {taskDetails.title}</CardTitle>
+          <p className="text-sm text-muted-foreground">Reward: ₦{taskDetails.reward}</p>
         </CardHeader>
         <CardContent>
           {userTask.status === "submitted_for_review" ? (
             <div className="text-center space-y-4">
-              <p className="text-lg text-yellow-600 font-semibold">
+              <p className="text-base md:text-lg text-yellow-600 font-semibold">
                 This task has already been submitted for review.
               </p>
               {userTask.screenshot_url && (

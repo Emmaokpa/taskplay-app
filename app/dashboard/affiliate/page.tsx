@@ -1,5 +1,4 @@
-// app/affiliate/page.tsx
-'use client';
+"use client";
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth-provider";
@@ -12,6 +11,7 @@ import { toast } from "sonner";
 import { DollarSign, Copy, Check, Tag } from "lucide-react";
 
 import { UserProfile, AffiliateProduct } from "@/lib/types";
+import { AffiliatePageSkeleton } from "@/components/affiliate-page-skeleton";
 
 const VIP_EARNING_RATES: { [key: string]: number } = {
   free: 0.20,
@@ -42,13 +42,6 @@ const AffiliateProductsPage = () => {
     // Reset the copied state after 2 seconds
     setTimeout(() => setCopiedProductId(null), 2000);
   };
-
-  // Redirect if not logged in
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, isLoading, router]);
 
   // Fetch affiliate products from your API route
   useEffect(() => {
@@ -97,11 +90,13 @@ const AffiliateProductsPage = () => {
     }
   }, [user, idToken]); // <--- Add idToken to dependency array
 
-  if (isLoading || !user) {
-    return <div className="flex justify-center items-center min-h-screen text-lg">Loading affiliate products...</div>;
+  // The layout handles the top-level auth loading state.
+  // We show a specific skeleton for this page while products are being fetched.
+  if (isLoading || productsLoading) {
+    return <AffiliatePageSkeleton />;
   }
 
-  const userTier = user.subscription?.status === 'active' 
+  const userTier = user && user.subscription?.status === 'active' 
                    ? user.subscription.tier
                    : 'free';
   const earningPercentage = VIP_EARNING_RATES[userTier] || VIP_EARNING_RATES.free;
@@ -121,11 +116,7 @@ const AffiliateProductsPage = () => {
         </p>
       </div>
 
-      {productsLoading ? (
-        <div className="flex justify-center items-center h-48">
-          <p>Loading available products...</p>
-        </div>
-      ) : productsError ? (
+      {productsError ? (
         <div className="text-center text-red-500">
           <p>{productsError}</p>
         </div>

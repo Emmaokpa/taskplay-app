@@ -27,6 +27,7 @@ import { auth, db } from "@/lib/firebase/config"; // Import db
 import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore";
 import { generateReferralCode } from "@/lib/generate-code";
 import { applyReferral } from "@/lib/firebase/referrals";
+import { GoogleIcon } from "./icons/google-icon";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
@@ -200,6 +201,7 @@ export function SignUpForm() {
           className="w-full"
           onClick={handleGoogleSignIn}
         >
+          <GoogleIcon className="mr-2 h-4 w-4" />
           Google
         </Button>
       </CardContent>

@@ -2,13 +2,16 @@ import { LoginForm } from "@/components/login-form";
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <div className="w-full max-w-md">
-        <h1 className="text-2xl font-semibold text-center mb-6">
-          Welcome Back!
-        </h1>
+    <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">
+      <div className="w-full max-w-md space-y-6">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold">Sign In</h1>
+          <p className="text-muted-foreground">
+            Enter your credentials to access your account
+          </p>
+        </div>
         <LoginForm />
       </div>
-    </main>
+    </div>
   );
 }

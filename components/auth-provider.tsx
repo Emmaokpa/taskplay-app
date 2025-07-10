@@ -2,11 +2,12 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
-import { auth, db } from "@/lib/firebase/config"; 
+import { auth, db } from "@/lib/firebase/config";
 // import { supabase } from "@/lib/supabase/supabaseClient";
 import { onAuthStateChanged, User as FirebaseAuthUser } from "firebase/auth";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, setDoc, Timestamp, increment } from "firebase/firestore";
 import { UserProfile } from "@/lib/types";
+import { toast } from "sonner";
 
 type AuthContextType = {
   user: UserProfile | null;
@@ -29,6 +30,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [idToken, setIdToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const isMounted = useRef(true);
+  const bonusChecked = useRef(false); // Use a ref to track if bonus has been checked for this session
+
+  const checkAndAwardDailyBonus = async (currentUser: UserProfile) => {
+    if (!currentUser?.uid) return;
+
+    const DAILY_LOGIN_BONUS_AMOUNT = 20;
+    const storedLastLoginDate = currentUser.lastLoginDate;
+    const storedConsecutiveDays = currentUser.consecutiveLoginDays || 0;
+
+    const now = Timestamp.now();
+    const todayMidnight = new Date(now.toDate().setHours(0, 0, 0, 0)).getTime();
+
+    // If there's no last login date, it's the user's first session.
+    // The sign-up form has already awarded the bonus, so we just set the date.
+    if (!storedLastLoginDate) {
+      const userDocRef = doc(db, "users", currentUser.uid);
+      await setDoc(
+        userDocRef,
+        {
+          lastLoginDate: now,
+          consecutiveLoginDays: 1, // Start the streak
+        },
+        { merge: true }
+      );
+      return; // Exit, no bonus to award here
+    }
+
+    const lastLoginDayMidnight = new Date(
+      storedLastLoginDate.toDate().setHours(0, 0, 0, 0)
+    ).getTime();
+
+    // If the last login was before today, award a bonus.
+    if (lastLoginDayMidnight < todayMidnight) {
+      const yesterdayMidnight = new Date(todayMidnight);
+      yesterdayMidnight.setDate(yesterdayMidnight.getDate() - 1);
+
+      const newConsecutiveDays =
+        lastLoginDayMidnight === yesterdayMidnight.getTime()
+          ? storedConsecutiveDays + 1
+          : 1; // Reset streak if they missed a day
+
+      const userDocRef = doc(db, "users", currentUser.uid);
+      await setDoc(
+        userDocRef,
+        {
+          lastLoginDate: now,
+          consecutiveLoginDays: newConsecutiveDays,
+          nairaBalance: increment(DAILY_LOGIN_BONUS_AMOUNT),
+        },
+        { merge: true }
+      );
+
+      toast.success("Daily login, added for today.");
+    }
+  };
 
   useEffect(() => {
     isMounted.current = true;
@@ -88,6 +144,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   } as UserProfile; // Cast if UserProfile might be stricter
 
                   setUser(userProfile);
+
+                  // Check for daily bonus once user profile is loaded for the first time this session
+                  if (!bonusChecked.current) {
+                    checkAndAwardDailyBonus(userProfile);
+                    bonusChecked.current = true;
+                  }
                 } else {
                   console.warn("AuthProvider: Firestore user profile does not exist for UID:", authUser.uid);
                   // Set a basic user profile from authUser if Firestore doc is missing
@@ -127,6 +189,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // console.log("AuthProvider: Firebase Auth State Changed - User signed out.");
           setUser(null);
           setIdToken(null); // Clear ID token on sign out
+          bonusChecked.current = false; // Reset bonus check on sign out
           setIsLoading(false); // Finished loading (no user)
           
           // // Also sign out from Supabase if they were signed in
